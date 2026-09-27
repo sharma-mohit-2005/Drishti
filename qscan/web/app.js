@@ -52,7 +52,7 @@
   };
   const icon = (name, cls = "") => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
 
-  const state = { scans: [], scan: null, sim: null, tab: "overview", filter: { q: "", band: "", kind: "", surface: "" }, bench: null, diff: null };
+  const state = { public: false, sources: null, scans: [], scan: null, sim: null, tab: "overview", filter: { q: "", band: "", kind: "", surface: "" }, bench: null, diff: null };
 
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   async function api(path, opts = {}) {
@@ -108,6 +108,7 @@
   // ---------- new scan ----------
   let formTab = "demo";
   const FORM_TABS = [["demo", "Demo repo", "play"], ["path", "Folder", "folder"], ["upload", "Upload .zip", "upload"], ["image", "Container", "box"], ["hosts", "TLS hosts", "globe"]];
+  const formTabs = () => FORM_TABS.filter(([k]) => !state.sources || state.sources.includes(k));
   const COVERAGE = ["Source code (7 languages)", "Dependencies", "Binaries & JARs", "Certificates & keys", "TLS / SSH configs", "Container images", "Live TLS endpoints", "CBOM · SARIF · CSV"];
 
   function renderHome(message) {
@@ -125,9 +126,10 @@
           <section class="card" id="scanForm" aria-labelledby="nsTitle">
             ${cardHead('<span id="nsTitle">Start a new scan</span>', "Choose a source")}
             <div class="seg" role="tablist" aria-label="Scan source">
-              ${FORM_TABS.map(([k, l, ic]) => `<button role="tab" data-ftab="${k}" aria-selected="${formTab === k}">${icon(ic)}<span>${l}</span></button>`).join("")}
+              ${formTabs().map(([k, l, ic]) => `<button role="tab" data-ftab="${k}" aria-selected="${formTab === k}">${icon(ic)}<span>${l}</span></button>`).join("")}
             </div>
             <div class="form-body" id="formBody" role="tabpanel">${formBody()}</div>
+            ${state.public ? `<p class="help">Public demo: only the bundled demo repo or an uploaded .zip can be scanned here. Uploaded scans are not listed for other visitors. Run Q-Scan locally to scan folders, container images or live TLS hosts fully offline.</p>` : ""}
             <div class="form-foot">
               <div class="field"><label for="crqc">Expected quantum computer (median year)</label>
                 <input id="crqc" type="number" min="2027" max="2060" step="1" value="2034" inputmode="numeric"></div>
@@ -587,10 +589,16 @@ qscan gate . --baseline baseline/qscan-result.json \\
 
   (async () => {
     try {
+      try {
+        const h = await api("/api/health");
+        state.public = !!h.public; state.sources = h.sources || null;
+        if (state.sources && !state.sources.includes(formTab)) formTab = state.sources[0];
+      } catch (_) {}
       await refreshScans();
       let last = null;
       try { last = localStorage.getItem("qd:last"); } catch (_) {}
       if (last && state.scans.some((s) => s.id === last)) await openScan(last);
+      else if (last && state.public) { try { await openScan(last); } catch (_) { state.scans.length ? await openScan(state.scans[0].id) : renderHome(); } }
       else if (state.scans.length) await openScan(state.scans[0].id);
       else renderHome();
     } catch (e) { renderHome(e.message); }

@@ -30,6 +30,19 @@ UPLOADS = DATA / "uploads"
 SCANS.mkdir(parents=True, exist_ok=True)
 UPLOADS.mkdir(parents=True, exist_ok=True)
 
+# Public demo mode (hosted deployments such as Railway): only the bundled demo and .zip uploads can be
+# scanned. Folder paths, container images and live TLS probes are disabled so a public URL cannot read
+# the server's files or be used to probe other hosts.
+# It is on by default on hosting platforms (Render, Hugging Face Spaces, Railway set these variables);
+# QSCAN_PUBLIC=0 turns it off.
+_hosted = any(os.environ.get(v) for v in ("RENDER", "SPACE_ID", "RAILWAY_ENVIRONMENT"))
+_pub = os.environ.get("QSCAN_PUBLIC", "1" if _hosted else "").strip().lower()
+PUBLIC = _pub in ("1", "true", "yes", "on")
+MAX_UPLOAD_MB = float(os.environ.get("QSCAN_MAX_UPLOAD_MB") or (25 if PUBLIC else 0))  # 0 = no limit
+MAX_UNZIP_MB = 200
+MAX_ZIP_FILES = 20_000
+MAX_KEPT_SCANS = int(os.environ.get("QSCAN_MAX_SCANS") or (40 if PUBLIC else 0))  # 0 = keep all
+
 app = FastAPI(title="Q-Scan", version=__version__)
 _pool = ThreadPoolExecutor(max_workers=2)
 _jobs: dict[str, dict] = {}
@@ -61,7 +74,16 @@ def _load(scan_id: str) -> dict:
     return r
 
 
-def _start(req: ScanRequest, cleanup: Path | None = None) -> str:
+def _prune():
+    if not MAX_KEPT_SCANS:
+        return
+    files = sorted(SCANS.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for p in files[MAX_KEPT_SCANS:]:
+        _cache.pop(p.stem, None)
+        p.unlink(missing_ok=True)
+
+
+def _start(req: ScanRequest, cleanup: Path | None = None, listed: bool = True) -> str:
     job_id = uuid.uuid4().hex[:10]
     _jobs[job_id] = {"id": job_id, "status": "running", "progress": 0.0, "message": "Queued", "scan_id": None, "error": None}
 
@@ -73,7 +95,9 @@ def _start(req: ScanRequest, cleanup: Path | None = None) -> str:
         try:
             r = run_scan(path=req.path, image=req.image, hosts=req.hosts, name=req.name,
                          cfg=RiskConfig(crqc_median_year=req.crqc_year), progress=progress)
+            r["listed"] = listed
             (SCANS / f"{r['id']}.json").write_text(json.dumps(r), encoding="utf-8")
+            _prune()
             _cache[r["id"]] = r
             with _lock:
                 _jobs[job_id].update(status="done", progress=1.0, message="Scan complete", scan_id=r["id"])
@@ -90,11 +114,16 @@ def _start(req: ScanRequest, cleanup: Path | None = None) -> str:
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "version": __version__}
+    return {"ok": True, "version": __version__, "public": PUBLIC,
+            "sources": ["demo", "upload"] if PUBLIC else ["demo", "path", "upload", "image", "hosts"],
+            "max_upload_mb": MAX_UPLOAD_MB or None}
 
 
 @app.post("/api/scans")
 def create_scan(req: ScanRequest):
+    if PUBLIC:
+        raise HTTPException(403, "This public demo only scans the bundled demo repo or an uploaded .zip. "
+                                 "Run Q-Scan locally to scan folders, container images or TLS hosts.")
     if not (req.path or req.image or req.hosts):
         raise HTTPException(400, "Give a folder path, a container image, or TLS hosts to scan.")
     if req.path and not Path(req.path).exists():
@@ -114,12 +143,24 @@ async def upload_scan(file: UploadFile = File(...)):
     dest = UPLOADS / uuid.uuid4().hex[:10]
     dest.mkdir(parents=True)
     zpath = dest / "upload.zip"
+    limit = int(MAX_UPLOAD_MB * 1024 * 1024) if MAX_UPLOAD_MB else None
+    written = 0
     with open(zpath, "wb") as fh:
-        shutil.copyfileobj(file.file, fh)
+        while chunk := file.file.read(1024 * 1024):
+            written += len(chunk)
+            if limit and written > limit:
+                fh.close()
+                shutil.rmtree(dest, ignore_errors=True)
+                raise HTTPException(413, f"Zip is larger than {MAX_UPLOAD_MB:g} MB.")
+            fh.write(chunk)
     root = dest / "src"
     try:
         with zipfile.ZipFile(zpath) as z:
-            for m in z.infolist():
+            members = z.infolist()
+            if PUBLIC and (len(members) > MAX_ZIP_FILES or sum(m.file_size for m in members) > MAX_UNZIP_MB * 1024 * 1024):
+                shutil.rmtree(dest, ignore_errors=True)
+                raise HTTPException(413, f"Zip expands to more than {MAX_UNZIP_MB} MB or {MAX_ZIP_FILES:,} files.")
+            for m in members:
                 target = (root / m.filename).resolve()
                 if not str(target).startswith(str(root.resolve())):
                     raise HTTPException(400, "Zip contains unsafe paths.")
@@ -128,7 +169,8 @@ async def upload_scan(file: UploadFile = File(...)):
         shutil.rmtree(dest, ignore_errors=True)
         raise HTTPException(400, "Not a valid zip file.")
     zpath.unlink()
-    return {"job_id": _start(ScanRequest(path=str(root), name=Path(file.filename).stem), cleanup=dest)}
+    # In public mode an uploaded scan is not listed for other visitors; it stays reachable by its random id.
+    return {"job_id": _start(ScanRequest(path=str(root), name=Path(file.filename).stem), cleanup=dest, listed=not PUBLIC)}
 
 
 @app.get("/api/jobs/{job_id}")
@@ -145,6 +187,8 @@ def list_scans():
         try:
             r = _load(p.stem)
         except Exception:
+            continue
+        if PUBLIC and not r.get("listed", True):
             continue
         items.append({"id": r["id"], "name": r["name"], "created": r["created"], "qri": r["summary"]["qri"],
                       "assets": r["stats"]["assets"], "bands": r["summary"]["bands"]})
@@ -196,7 +240,7 @@ def diff(a: str, b: str):
 @app.get("/api/bench")
 def bench(iterations: int = 30):
     from .bench import run
-    return JSONResponse(run(max(5, min(iterations, 500))))
+    return JSONResponse(run(max(5, min(iterations, 100 if PUBLIC else 500))))
 
 
 app.mount("/", StaticFiles(directory=WEB, html=True), name="web")

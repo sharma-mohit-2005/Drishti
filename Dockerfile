@@ -8,6 +8,6 @@ COPY scripts ./scripts
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --no-deps .
 ENV QSCAN_DATA=/data
-VOLUME ["/data", "/scan"]
 EXPOSE 8765
-CMD ["qscan", "serve", "--host", "0.0.0.0", "--port", "8765"]
+# Railway and similar platforms pass the port in $PORT; locally it defaults to 8765.
+CMD ["sh", "-c", "qscan serve --host 0.0.0.0 --port ${PORT:-8765}"]

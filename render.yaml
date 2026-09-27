@@ -1,0 +1,14 @@
+# Render Blueprint: free Docker web service, redeploys on every push to the default branch.
+services:
+  - type: web
+    name: qscan
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: QSCAN_PUBLIC
+        value: "1"
+      - key: QSCAN_DATA
+        value: /tmp/qscan

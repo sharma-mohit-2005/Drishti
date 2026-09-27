@@ -49,6 +49,14 @@ python -m qscan bench                                # classical vs PQC timings 
 
 Offline deployment with Docker: `docker compose up`, then open http://localhost:8765. Code placed in `./scan-target` is available at `/scan`.
 
+### Hosted demo (free: Render or Hugging Face Spaces)
+
+- **Render** (free web service): in Render choose *New → Blueprint*, pick this GitHub repo, and `render.yaml` sets up a Docker web service that redeploys on every push. The free instance sleeps after about 15 idle minutes; the first request then takes 30–60 s.
+- **Hugging Face Spaces**: create a Space with the *Docker* SDK and push this repo to it (the Space's README needs `sdk: docker` and `app_port: 8765` in its front matter).
+- `railway.json` is kept for Railway (paid).
+
+Public mode is **on by default on Render, Hugging Face Spaces and Railway** (`QSCAN_PUBLIC=1`). In that mode only the bundled demo repo and `.zip` uploads can be scanned. Folder paths, container images and live TLS probes are disabled, so the public URL cannot read the server's files or probe other hosts. Uploads are capped at 25 MB (`QSCAN_MAX_UPLOAD_MB`), 200 MB unzipped and 20,000 files. Uploaded scans are not listed for other visitors, and only the newest 40 scans are kept (`QSCAN_MAX_SCANS`).
+
 ## Dashboard
 
 - **Overview**: Quantum Readiness Index, band counts, harvest-now-decrypt-later count, risk heatmap (criticality × years of margin), asset mix, top risks, and a **what-if slider** for the CRQC year that re-scores everything live.
