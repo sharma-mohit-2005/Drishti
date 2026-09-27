@@ -1,0 +1,19 @@
+# Blocks pull requests that add new quantum-vulnerable or classically broken crypto.
+# Commit a baseline once:  qdrishti scan . --out .qdrishti-baseline --format json
+name: crypto-gate
+on: [pull_request]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install .
+      - run: qdrishti gate . --baseline .qdrishti-baseline/qdrishti-result.json --fail-on critical,classical --sarif q.sarif
+      - if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: q.sarif }

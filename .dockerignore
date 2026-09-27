@@ -1,0 +1,7 @@
+.git
+.qdrishti
+qdrishti-out
+**/__pycache__
+.pytest_cache
+demo/bharat-finserve-fixed
+scan-target

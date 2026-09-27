@@ -1,0 +1,11 @@
+[ req ]
+default_bits = 2048
+default_md = sha1
+distinguished_name = req_dn
+
+[ req_dn ]
+commonName = Common Name
+
+[ system_default_sect ]
+MinProtocol = TLSv1
+CipherString = DEFAULT@SECLEVEL=1

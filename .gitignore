@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.qdrishti/
+qdrishti-out/
+prof.out
+demo/bharat-finserve-fixed/
+scan-target/
+.venv/

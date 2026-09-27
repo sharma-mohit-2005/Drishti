@@ -1,0 +1,43 @@
+# Application context for Q-Drishti risk scoring.
+# Bharat FinServe is a fictional company used only for this demo.
+project: Bharat FinServe (demo)
+default_app:
+  criticality: 3
+  data_class: internal
+  exposure: internal
+apps:
+  - name: payments-svc
+    path: payments-svc
+    criticality: 5
+    data_class: financial
+    exposure: internet
+  - name: kyc-service
+    path: kyc-service
+    criticality: 5
+    data_class: identity
+    exposure: internet
+  - name: notification-svc
+    path: notification-svc
+    criticality: 2
+    data_class: internal
+    exposure: internal
+  - name: legacy-reports
+    path: legacy-reports
+    criticality: 3
+    data_class: confidential
+    exposure: internal
+  - name: card-gateway
+    path: card-gateway
+    criticality: 5
+    data_class: financial
+    exposure: internal
+  - name: edge
+    path: edge
+    criticality: 5
+    data_class: financial
+    exposure: internet
+  - name: infra
+    path: infra
+    criticality: 4
+    data_class: confidential
+    exposure: internal
