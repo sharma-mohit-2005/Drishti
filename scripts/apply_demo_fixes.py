@@ -1,7 +1,7 @@
-"""Copy the demo repo and apply the fixes Q-Drishti recommends, for a before/after demo.
+"""Copy the demo repo and apply the fixes Q-Scan recommends, for a before/after demo.
 
   python scripts/apply_demo_fixes.py            # writes demo/bharat-finserve-fixed
-  qdrishti scan demo/bharat-finserve-fixed      # QRI goes up; compare the two scans in the dashboard
+  qscan scan demo/bharat-finserve-fixed      # QRI goes up; compare the two scans in the dashboard
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def main():
     if DST.exists():
         shutil.rmtree(DST)
     shutil.copytree(SRC, DST)
-    cfg = DST / "qdrishti.yml"
+    cfg = DST / "qscan.yml"
     cfg.write_text(cfg.read_text(encoding="utf-8").replace("project: Bharat FinServe (demo)", "project: Bharat FinServe (after fixes)"), encoding="utf-8")
     applied = 0
     for rel, subs in FIXES.items():

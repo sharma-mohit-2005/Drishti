@@ -1,8 +1,8 @@
-# Q-Drishti
+# Q-Scan
 
 **Enterprise Cryptographic Discovery & Analysis Tool** · Smart India Hackathon 2026 · SIH26164 (NTRO)
 
-Q-Drishti finds every cryptographic artefact in a system, tells you which ones a quantum computer will break and when, and recommends the NIST post-quantum replacement. It runs fully offline.
+Q-Scan finds every cryptographic artefact in a system, tells you which ones a quantum computer will break and when, and recommends the NIST post-quantum replacement. It runs fully offline.
 
 ```
 scan  →  normalise  →  score quantum risk  →  recommend fix  →  CBOM / SARIF / CSV / dashboard
@@ -26,25 +26,25 @@ scan  →  normalise  →  score quantum risk  →  recommend fix  →  CBOM / S
 - **Probabilistic Mosca**: an asset is at risk when *X + Y > Z*. X is the data shelf life (from the app's data class), Y is the migration time (from where the crypto lives, how hard-coded it is, and how many places use it), and Z is the CRQC arrival time, sampled from a lognormal distribution (default median 2034, σ = 0.45). We report `P(exposure) = P(X + Y > Z)`.
 - **Quantum Risk Score** (0–100): `100 × Q × H × P × (0.40·C/5 + 0.35·S + 0.25·E)`, where Q is quantum vulnerability, H is harvest-now-decrypt-later exposure, C is app criticality, S is data sensitivity and E is exposure. Classically broken crypto gets a floor of 90.
 - **Quantum Readiness Index**: 100 minus the criticality-weighted mean QRS.
-- App context comes from `qdrishti.yml` in the scanned repo (see `demo/bharat-finserve/qdrishti.yml`). Without it, names like `payments` or `kyc` are used as hints.
+- App context comes from `qscan.yml` in the scanned repo (see `demo/bharat-finserve/qscan.yml`). Without it, names like `payments` or `kyc` are used as hints.
 
 ## Quick start
 
 ```bash
 pip install -r requirements.txt
-python -m qdrishti demo                  # scan the bundled demo repo, write reports to ./qdrishti-out
-python -m qdrishti serve                 # dashboard on http://127.0.0.1:8765
+python -m qscan demo                  # scan the bundled demo repo, write reports to ./qscan-out
+python -m qscan serve                 # dashboard on http://127.0.0.1:8765
 ```
 
 Other commands:
 
 ```bash
-python -m qdrishti scan <folder> --out reports          # JSON result, CycloneDX CBOM, SARIF, CSV
-python -m qdrishti scan --image nginx:1.25              # container image (needs Docker, image pulled)
-python -m qdrishti scan --hosts 127.0.0.1:8443          # live TLS endpoint
-python -m qdrishti scan <folder> --crqc-year 2030       # change the CRQC assumption
-python -m qdrishti gate <folder> --baseline reports/qdrishti-result.json --fail-on critical,classical
-python -m qdrishti bench                                # classical vs PQC timings on this machine
+python -m qscan scan <folder> --out reports          # JSON result, CycloneDX CBOM, SARIF, CSV
+python -m qscan scan --image nginx:1.25              # container image (needs Docker, image pulled)
+python -m qscan scan --hosts 127.0.0.1:8443          # live TLS endpoint
+python -m qscan scan <folder> --crqc-year 2030       # change the CRQC assumption
+python -m qscan gate <folder> --baseline reports/qscan-result.json --fail-on critical,classical
+python -m qscan bench                                # classical vs PQC timings on this machine
 ```
 
 Offline deployment with Docker: `docker compose up`, then open http://localhost:8765. Code placed in `./scan-target` is available at `/scan`.
@@ -61,7 +61,7 @@ Offline deployment with Docker: `docker compose up`, then open http://localhost:
 
 ```bash
 python scripts/make_demo_certs.py        # (re)generate throwaway demo certificates and keys
-python -m qdrishti serve                 # run a demo scan from the dashboard
+python -m qscan serve                 # run a demo scan from the dashboard
 python scripts/apply_demo_fixes.py       # writes demo/bharat-finserve-fixed with the recommended fixes
                                          # scan that folder, then Export & CI → Compare
 python scripts/demo_tls_server.py        # local TLS server on 127.0.0.1:8443 for the live-endpoint demo
@@ -79,7 +79,7 @@ Bharat FinServe is a fictional company. Its keys exist only to give the scanner 
 | Real-world codebase: Python 3.12 standard library + site-packages (35,963 files, 10.2 million lines) | 341 assets, 3,042 occurrences; median 248 s over 3 runs (160–315 s), about 41,000 lines/s |
 | Real OpenSSL binary (Git for Windows `libcrypto-3-x64.dll`) | Detects OpenSSL 3.2.3 and flags that it has no PQC |
 | Live TLS (local demo server) | Finds accepted versions (TLS 1.2, 1.3), negotiated suite and the RSA-2048 certificate |
-| Classical timings on this laptop (`qdrishti bench`) | X25519 0.15 ms, ECDSA-P256 sign 0.09 ms, RSA-2048 sign 1.5 ms (medians) |
+| Classical timings on this laptop (`qscan bench`) | X25519 0.15 ms, ECDSA-P256 sign 0.09 ms, RSA-2048 sign 1.5 ms (medians) |
 | Tests | `python -m pytest` (21 tests) |
 
 Machine: Windows 11, Python 3.12. Re-run with `python scripts/benchmark.py [folder]`.
@@ -91,7 +91,7 @@ NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA), NIST IR 8547 (dra
 ## Layout
 
 ```
-qdrishti/
+qscan/
   registry.py        canonical algorithms, aliases, parsers, classical + quantum assessment
   scanners/          source, configs, certs, deps, binary, container, network
   engine.py          walk → scan (parallel) → normalise → risk → recommend → summary

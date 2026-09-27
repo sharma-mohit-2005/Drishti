@@ -1,4 +1,4 @@
-from qdrishti import registry as R
+from qscan import registry as R
 
 
 def test_normalize_aliases():

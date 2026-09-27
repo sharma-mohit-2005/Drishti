@@ -31,7 +31,7 @@ def classical(n: int = 50) -> list[dict]:
                 "median_ms": _time(lambda: x25519.X25519PrivateKey.generate().exchange(b.public_key()), n),
                 "public_key": 32, "ciphertext": 32})
     rk = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    msg = b"q-drishti benchmark message"
+    msg = b"q-scan benchmark message"
     out.append({"algorithm": "RSA-2048", "operation": "sign (PKCS#1 v1.5, SHA-256)",
                 "median_ms": _time(lambda: rk.sign(msg, padding.PKCS1v15(), hashes.SHA256()), n),
                 "public_key": 256, "signature": 256})
@@ -62,7 +62,7 @@ def pqc(n: int = 50) -> tuple[bool, list[dict]]:
                             **{k: v for k, v in PQC_SIZES[label].items() if k != "standard"}})
         except Exception:
             continue
-    msg = b"q-drishti benchmark message"
+    msg = b"q-scan benchmark message"
     for alg in ("ML-DSA-44", "ML-DSA-65", "ML-DSA-87"):
         try:
             with oqs.Signature(alg) as s:

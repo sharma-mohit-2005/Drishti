@@ -2,8 +2,8 @@ import json
 import tarfile
 from io import BytesIO
 
-from qdrishti.scanners import binary, configs, container, deps
-from qdrishti.scanners.source import scan_source
+from qscan.scanners import binary, configs, container, deps
+from qscan.scanners.source import scan_source
 
 
 def names(findings):

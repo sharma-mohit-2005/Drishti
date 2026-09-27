@@ -7,10 +7,10 @@ import pytest
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
-    monkeypatch.setenv("QDRISHTI_DATA", str(tmp_path / "data"))
+    monkeypatch.setenv("QSCAN_DATA", str(tmp_path / "data"))
     import importlib
 
-    import qdrishti.api as api
+    import qscan.api as api
     importlib.reload(api)
     from fastapi.testclient import TestClient
     return TestClient(api.app)

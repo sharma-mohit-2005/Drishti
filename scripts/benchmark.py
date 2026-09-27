@@ -16,8 +16,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from qdrishti.cli import DEMO_DIR  # noqa: E402
-from qdrishti.engine import run_scan  # noqa: E402
+from qscan.cli import DEMO_DIR  # noqa: E402
+from qscan.engine import run_scan  # noqa: E402
 
 FILLER = {
     ".py": "def handler_{i}(request):\n    total = sum(x * 2 for x in range({i} % 50))\n    return {{'ok': True, 'n': total}}\n\n",

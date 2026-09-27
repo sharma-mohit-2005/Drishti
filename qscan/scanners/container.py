@@ -59,4 +59,4 @@ def unpack_saved_image(tar_path: Path, workdir: Path) -> Path:
 
 
 def temp_workdir() -> Path:
-    return Path(tempfile.mkdtemp(prefix="qdrishti-img-"))
+    return Path(tempfile.mkdtemp(prefix="qscan-img-"))

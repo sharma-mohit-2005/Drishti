@@ -15,13 +15,13 @@ _PADDING = {"pkcs5": "pkcs5", "pkcs1v15": "pkcs1v15", "oaep": "oaep", "raw": "ra
 
 def _props(a: dict) -> list[dict]:
     r = a.get("risk") or {}
-    props = [{"name": "qdrishti:status", "value": a["status"]}]
+    props = [{"name": "qscan:status", "value": a["status"]}]
     if r:
-        props += [{"name": "qdrishti:qrs", "value": str(r["qrs"])}, {"name": "qdrishti:band", "value": r["band"]},
-                  {"name": "qdrishti:hndl", "value": str(r["hndl"]).lower()},
-                  {"name": "qdrishti:p_exposure", "value": str(r["p_exposure"])}]
+        props += [{"name": "qscan:qrs", "value": str(r["qrs"])}, {"name": "qscan:band", "value": r["band"]},
+                  {"name": "qscan:hndl", "value": str(r["hndl"]).lower()},
+                  {"name": "qscan:p_exposure", "value": str(r["p_exposure"])}]
     if a.get("recommendations"):
-        props.append({"name": "qdrishti:recommendation", "value": a["recommendations"][0]["target"]})
+        props.append({"name": "qscan:recommendation", "value": a["recommendations"][0]["target"]})
     return props
 
 
@@ -107,10 +107,10 @@ def to_cbom(result: dict) -> dict:
         "bomFormat": "CycloneDX", "specVersion": "1.6", "serialNumber": f"urn:uuid:{uuid.uuid4()}", "version": 1,
         "metadata": {
             "timestamp": result["created"],
-            "tools": {"components": [{"type": "application", "name": "Q-Drishti", "version": result["tool"]["version"]}]},
+            "tools": {"components": [{"type": "application", "name": "Q-Scan", "version": result["tool"]["version"]}]},
             "component": {"type": "application", "name": result["name"], "bom-ref": "root"},
-            "properties": [{"name": "qdrishti:qri", "value": str(result["summary"]["qri"])},
-                           {"name": "qdrishti:crqc_median_year", "value": str(result["risk_config"]["crqc_median_year"])}],
+            "properties": [{"name": "qscan:qri", "value": str(result["summary"]["qri"])},
+                           {"name": "qscan:crqc_median_year", "value": str(result["risk_config"]["crqc_median_year"])}],
         },
         "components": comps,
         "dependencies": deps,
@@ -128,7 +128,7 @@ def to_sarif(result: dict) -> dict:
         r = a.get("risk") or {}
         if o.get("parent") or not r or r["band"] == "low" or o["surface"] in ("endpoint",):
             continue
-        rid = o["rule_id"] or "qdrishti"
+        rid = o["rule_id"] or "qscan"
         rules.setdefault(rid, {"id": rid, "name": rid, "shortDescription": {"text": f"Cryptographic asset ({rid})"}})
         rec = a["recommendations"][0]["target"] if a.get("recommendations") else "review"
         loc = {"physicalLocation": {"artifactLocation": {"uri": o["path"].split("!/")[0]}}}
@@ -136,9 +136,9 @@ def to_sarif(result: dict) -> dict:
             loc["physicalLocation"]["region"] = {"startLine": o["line"]}
         results.append({"ruleId": rid, "level": _LEVEL[r["band"]],
                         "message": {"text": f"{a['name']} ({a['status']}, QRS {r['qrs']}). Recommended: {rec}."},
-                        "locations": [loc], "partialFingerprints": {"qdrishti/v1": o["fingerprint"]}})
+                        "locations": [loc], "partialFingerprints": {"qscan/v1": o["fingerprint"]}})
     return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0",
-            "runs": [{"tool": {"driver": {"name": "Q-Drishti", "version": result["tool"]["version"],
+            "runs": [{"tool": {"driver": {"name": "Q-Scan", "version": result["tool"]["version"],
                                           "rules": list(rules.values())}}, "results": results}]}
 
 

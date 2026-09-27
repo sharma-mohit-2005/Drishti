@@ -24,13 +24,13 @@ from .risk import RiskConfig
 ROOT = Path(__file__).resolve().parent.parent
 WEB = Path(__file__).resolve().parent / "web"
 DEMO = ROOT / "demo" / "bharat-finserve"
-DATA = Path(os.environ.get("QDRISHTI_DATA", ROOT / ".qdrishti"))
+DATA = Path(os.environ.get("QSCAN_DATA") or os.environ.get("QDRISHTI_DATA") or ROOT / ".qscan")
 SCANS = DATA / "scans"
 UPLOADS = DATA / "uploads"
 SCANS.mkdir(parents=True, exist_ok=True)
 UPLOADS.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Q-Drishti", version=__version__)
+app = FastAPI(title="Q-Scan", version=__version__)
 _pool = ThreadPoolExecutor(max_workers=2)
 _jobs: dict[str, dict] = {}
 _lock = threading.Lock()
@@ -174,7 +174,7 @@ def export(scan_id: str, fmt: str):
     elif fmt == "csv":
         body, mt, fn = to_csv(r), "text/csv", f"{safe}-inventory.csv"
     elif fmt == "json":
-        body, mt, fn = json.dumps(r, indent=1), "application/json", f"{safe}-qdrishti.json"
+        body, mt, fn = json.dumps(r, indent=1), "application/json", f"{safe}-qscan.json"
     else:
         raise HTTPException(400, "Format must be cbom, sarif, csv or json.")
     return Response(body, media_type=mt, headers={"Content-Disposition": f'attachment; filename="{fn}"'})

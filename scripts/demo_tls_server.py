@@ -1,7 +1,7 @@
 """Local TLS server for demoing the live-endpoint scanner (127.0.0.1 only).
 
   python scripts/demo_tls_server.py            # serves the demo RSA-2048 certificate on 127.0.0.1:8443
-  qdrishti scan --hosts 127.0.0.1:8443
+  qscan scan --hosts 127.0.0.1:8443
 """
 from __future__ import annotations
 

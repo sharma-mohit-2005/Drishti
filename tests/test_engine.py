@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from qdrishti import risk as K
-from qdrishti.cli import DEMO_DIR, main
-from qdrishti.engine import apply_risk, run_scan
-from qdrishti.export import to_cbom, to_csv, to_sarif
+from qscan import risk as K
+from qscan.cli import DEMO_DIR, main
+from qscan.engine import apply_risk, run_scan
+from qscan.export import to_cbom, to_csv, to_sarif
 
 
 def test_mosca_probability_is_monotonic():
@@ -58,7 +58,7 @@ def test_gate_blocks_new_weak_crypto(tmp_path, capsys):
     repo.mkdir()
     (repo / "a.py").write_text("import hashlib\nhashlib.sha256(b'x')\n")
     assert main(["scan", str(repo), "--out", str(tmp_path / "base"), "--format", "json", "--no-parallel"]) == 0
-    baseline = tmp_path / "base" / "qdrishti-result.json"
+    baseline = tmp_path / "base" / "qscan-result.json"
     assert main(["gate", str(repo), "--baseline", str(baseline), "--no-parallel"]) == 0
     (repo / "b.py").write_text("import hashlib\nhashlib.md5(b'x')\n")
     assert main(["gate", str(repo), "--baseline", str(baseline), "--no-parallel"]) == 1

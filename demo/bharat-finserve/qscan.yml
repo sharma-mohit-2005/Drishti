@@ -1,4 +1,4 @@
-# Application context for Q-Drishti risk scoring.
+# Application context for Q-Scan risk scoring.
 # Bharat FinServe is a fictional company used only for this demo.
 project: Bharat FinServe (demo)
 default_app:

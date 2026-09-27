@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FFFFFF">
+<title>Q-Scan</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#app">Skip to content</a>
+<div class="shell">
+  <aside class="sidebar" aria-label="Workspace">
+    <div class="brand">
+      <img class="mark" src="logo.png" alt="" width="36" height="36">
+      <div>
+        <div class="wordmark">Q-Scan</div>
+        <div class="tagline">Quantum risk discovery</div>
+      </div>
+    </div>
+
+    <button id="newScanBtn" class="btn primary block">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      New scan
+    </button>
+
+    <div class="side-field">
+      <label for="scanPicker">Scan</label>
+      <select id="scanPicker"></select>
+    </div>
+
+    <nav id="nav" class="nav" aria-label="Scan sections"></nav>
+
+    <div class="side-foot">
+      <span class="dot" aria-hidden="true"></span>
+      Runs locally · offline
+    </div>
+  </aside>
+
+  <main id="app" tabindex="-1"></main>
+</div>
+
+<aside id="drawer" class="drawer" hidden aria-label="Asset details" role="dialog" aria-modal="true">
+  <div class="drawer-head">
+    <span class="drawer-title">Asset details</span>
+    <button id="drawerClose" class="icon-btn" aria-label="Close details">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div id="drawerBody"></div>
+</aside>
+<div id="scrim" class="scrim" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

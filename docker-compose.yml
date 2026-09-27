@@ -1,12 +1,12 @@
 # Offline deployment: `docker compose up`, then open http://localhost:8765
 # Put the code you want to scan in ./scan-target (mounted read-only at /scan).
 services:
-  qdrishti:
+  qscan:
     build: .
-    image: qdrishti:0.1.0
+    image: qscan:0.1.0
     ports: ["127.0.0.1:8765:8765"]
     volumes:
-      - qdrishti-data:/data
+      - qscan-data:/data
       - ./scan-target:/scan:ro
 volumes:
-  qdrishti-data: {}
+  qscan-data: {}

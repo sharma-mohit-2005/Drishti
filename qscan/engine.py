@@ -23,7 +23,7 @@ from .scanners import binary, certs, configs, deps
 from .scanners.source import LANG, SOURCE_EXTS, scan_source
 
 SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", "__pycache__", ".venv", "venv", "env", ".tox", ".idea",
-             ".vscode", ".mypy_cache", ".pytest_cache", ".gradle", ".next", ".cache", "qdrishti-out", ".qdrishti"}
+             ".vscode", ".mypy_cache", ".pytest_cache", ".gradle", ".next", ".cache", "qscan-out", ".qscan"}
 MAX_TEXT = 5 * 1024 * 1024
 MAX_BIN = 64 * 1024 * 1024
 PARALLEL_THRESHOLD = 400
@@ -112,7 +112,7 @@ class AppMap:
         self.default = {"criticality": 3, "data_class": "internal", "exposure": "internal", **(default or {})}
         cfg_file = None
         if root and root.is_dir():
-            for n in ("qdrishti.yml", "qdrishti.yaml", ".qdrishti.yml"):
+            for n in ("qscan.yml", "qscan.yaml", ".qscan.yml", "qdrishti.yml", "qdrishti.yaml", ".qdrishti.yml"):  # qdrishti.* = pre-rename name
                 if (root / n).exists():
                     cfg_file = root / n
                     break
@@ -122,7 +122,7 @@ class AppMap:
             self.default.update(data.get("default_app") or {})
             for a in data.get("apps") or []:
                 self.apps.append({"criticality": 3, "data_class": "internal", "exposure": "internal", **a,
-                                  "path": str(a.get("path", a["name"])).strip("/"), "source": "qdrishti.yml"})
+                                  "path": str(a.get("path", a["name"])).strip("/"), "source": cfg_file.name})
         self._auto: dict[str, dict] = {}
 
     def for_path(self, rel: str) -> dict:
@@ -434,7 +434,7 @@ def run_scan(path: str | None = None, image: str | None = None, hosts: list[str]
     result = {
         "id": uuid.uuid4().hex[:12],
         "name": name or appmap.project or (root.name if root else image or (f"TLS {hosts[0]}" if hosts else "scan")),
-        "tool": {"name": "Q-Drishti", "version": __version__},
+        "tool": {"name": "Q-Scan", "version": __version__},
         "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "targets": targets, "apps": apps,
         "assets": sorted(b.assets.values(), key=lambda a: a["id"]), "occurrences": b.occ,

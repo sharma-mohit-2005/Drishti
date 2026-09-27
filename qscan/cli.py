@@ -1,4 +1,4 @@
-"""Command line: qdrishti scan | gate | serve | bench | demo."""
+"""Command line: qscan scan | gate | serve | bench | demo."""
 from __future__ import annotations
 
 import argparse
@@ -17,7 +17,7 @@ BAND_ORDER = ["critical", "high", "medium", "low"]
 
 def _print_summary(r: dict) -> None:
     s, st = r["summary"], r["stats"]
-    print(f"\nQ-Drishti {__version__}  |  {r['name']}")
+    print(f"\nQ-Scan {__version__}  |  {r['name']}")
     print(f"  files scanned {st['files_scanned']}  |  source files {st['source_files']}  |  {st['loc']:,} lines of code  |  {st['duration_s']} s")
     print(f"  {st['assets']} crypto assets from {st['occurrences']} occurrences\n")
     print(f"  Quantum Readiness Index  {s['qri']}/100   (CRQC median year {r['risk_config']['crqc_median_year']:.0f})")
@@ -34,7 +34,7 @@ def _write_outputs(r: dict, out: Path, formats: list[str]) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     written = []
     if "json" in formats:
-        p = out / "qdrishti-result.json"
+        p = out / "qscan-result.json"
         p.write_text(json.dumps(r, indent=1), encoding="utf-8")
         written.append(p)
     if "cbom" in formats:
@@ -42,7 +42,7 @@ def _write_outputs(r: dict, out: Path, formats: list[str]) -> list[Path]:
         p.write_text(json.dumps(to_cbom(r), indent=2), encoding="utf-8")
         written.append(p)
     if "sarif" in formats:
-        p = out / "qdrishti.sarif"
+        p = out / "qscan.sarif"
         p.write_text(json.dumps(to_sarif(r), indent=2), encoding="utf-8")
         written.append(p)
     if "csv" in formats:
@@ -95,11 +95,11 @@ def cmd_serve(a) -> int:
     import uvicorn
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if s.connect_ex((a.host, a.port)) == 0:
-            print(f"Port {a.port} is already in use (maybe Q-Drishti is already running: open http://{a.host}:{a.port}).\n"
-                  f"To start another copy, pick a free port: python -m qdrishti serve --port {a.port + 1}")
+            print(f"Port {a.port} is already in use (maybe Q-Scan is already running: open http://{a.host}:{a.port}).\n"
+                  f"To start another copy, pick a free port: python -m qscan serve --port {a.port + 1}")
             return 1
-    print(f"Q-Drishti dashboard on http://{a.host}:{a.port}")
-    uvicorn.run("qdrishti.api:app", host=a.host, port=a.port, log_level="warning")
+    print(f"Q-Scan dashboard on http://{a.host}:{a.port}")
+    uvicorn.run("qscan.api:app", host=a.host, port=a.port, log_level="warning")
     return 0
 
 
@@ -121,8 +121,8 @@ def cmd_demo(a) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(prog="qdrishti", description="Enterprise Cryptographic Discovery & Analysis Tool")
-    p.add_argument("--version", action="version", version=f"qdrishti {__version__}")
+    p = argparse.ArgumentParser(prog="qscan", description="Enterprise Cryptographic Discovery & Analysis Tool")
+    p.add_argument("--version", action="version", version=f"qscan {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     def common(sp):
@@ -134,14 +134,14 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--image", help="local container image, e.g. nginx:1.25")
     s.add_argument("--hosts", help="comma-separated host:port list for live TLS probing")
     s.add_argument("--name")
-    s.add_argument("--out", default="qdrishti-out")
+    s.add_argument("--out", default="qscan-out")
     s.add_argument("--format", default="json,cbom,sarif,csv")
     common(s)
     s.set_defaults(fn=cmd_scan)
 
     g = sub.add_parser("gate", help="CI gate: fail if new risky crypto appears")
     g.add_argument("target")
-    g.add_argument("--baseline", help="previous qdrishti-result.json")
+    g.add_argument("--baseline", help="previous qscan-result.json")
     g.add_argument("--fail-on", default="critical,classical")
     g.add_argument("--sarif", help="also write SARIF here")
     common(g)
@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     b.set_defaults(fn=cmd_bench)
 
     d = sub.add_parser("demo", help="scan the bundled Bharat FinServe demo repository")
-    d.add_argument("--out", default="qdrishti-out")
+    d.add_argument("--out", default="qscan-out")
     common(d)
     d.set_defaults(fn=cmd_demo)
 
